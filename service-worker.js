@@ -1,8 +1,9 @@
 // service-worker.js
-// Cache shell cơ bản (HTML/CSS/JS tĩnh) để mở nhanh hơn lần sau và có thể cài như app.
-// KHÔNG cache dữ liệu Supabase — mọi query luôn đi mạng thật để đảm bảo dữ liệu mới nhất.
+// Mở nhanh và cài như app, nhưng LUÔN lấy bản mới nhất khi có mạng (network-first).
+// Chỉ dùng bộ nhớ đệm khi mất mạng. KHÔNG cache dữ liệu Supabase.
+// Muốn ép mọi máy bỏ bản cũ: tăng số phiên bản bên dưới (v2 -> v3 ...).
 
-const CACHE_NAME = 'ttequip-shell-v1';
+const CACHE_NAME = 'ttequip-shell-v2';
 const SHELL_FILES = [
   './index.html',
   './login.html',
@@ -27,16 +28,23 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
 
-  // Không cache request tới Supabase — luôn lấy dữ liệu mới
-  if (url.hostname.endsWith('.supabase.co')) return;
+  // Không đụng tới Supabase và các tài nguyên bên ngoài (CDN): luôn đi mạng thật
+  if (url.origin !== self.location.origin) return;
 
-  // Cache-first cho file tĩnh trong app, network-first cho phần còn lại
+  // Network-first: có mạng thì lấy bản mới và lưu lại; mất mạng thì dùng bản đã lưu
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).catch(() => cached);
-    })
+    fetch(req)
+      .then((res) => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
   );
 });
