@@ -137,7 +137,16 @@ export async function render(container, profile, isStale = () => false) {
     dialog.querySelector('#dNewRate').addEventListener('click', () => openRateModal(partner));
     dialog.querySelector('#dNewProject').addEventListener('click', () => openNewProjectModal(partner));
 
-    loadRateData(partner, projs).then(({ baseMap, ovrMap }) => {
+    // Admin: nạp danh sách Sale + phân công riêng theo dự án để hiện khối "Sale theo sát"
+    const isAdmin = profile.role === 'admin';
+    const salesPromise = isAdmin
+      ? Promise.all([
+          supabase.from('profiles').select('id, full_name, email').eq('role', 'sale').eq('is_active', true).order('full_name'),
+          projs.length ? supabase.from('sale_project_assignments').select('user_id, project_id').in('project_id', projs.map(p => p.id)) : { data: [] },
+        ]).then(([a, b]) => ({ sales: a.data ?? [], assigns: b.data ?? [] }))
+      : Promise.resolve({ sales: [], assigns: [] });
+
+    Promise.all([loadRateData(partner, projs), salesPromise]).then(([{ baseMap, ovrMap }, { sales, assigns }]) => {
       const items = [
         { key: 'default', label: 'Bảng giá mặc định', sub: 'Giá khung áp dụng cho mọi dự án', project: null, ovr: {} },
         ...projs.map(pr => ({ key: pr.id, label: pr.name, sub: pr.code ?? '', project: pr, ovr: ovrMap[pr.id] ?? {} })),
@@ -159,6 +168,18 @@ export async function render(container, profile, isStale = () => false) {
       const table = dialog.querySelector('#projTable');
       table.innerHTML = `<thead><tr><th>#</th><th>Dự án</th><th class="num">Tình trạng giá</th><th></th></tr></thead><tbody>${rowsHtml}</tbody>`;
 
+      function buildSaleBlock(pr) {
+        const mine = assigns.filter(a => a.project_id === pr.id).map(a => a.user_id);
+        return `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
+          <b style="font-size:.84rem;">Sale theo sát dự án này</b>
+          <div style="font-size:.76rem; color:var(--ink-soft); margin:2px 0 6px;">Gán riêng cho dự án khó cần theo sát. Sale phụ trách cả khách hàng "${esc(partner.name)}" (khai ở mục Người dùng) vẫn thấy dự án như bình thường.</div>
+          <div data-sale-list="${pr.id}">
+            ${sales.map(u => `<label style="display:flex; gap:8px; align-items:center; margin:3px 0; font-size:.84rem;"><input type="checkbox" value="${u.id}" ${mine.includes(u.id) ? 'checked' : ''}> ${esc(u.full_name ?? u.email)}</label>`).join('') || '<span style="color:var(--ink-soft); font-size:.8rem;">Chưa có tài khoản Sale nào.</span>'}
+          </div>
+          ${sales.length ? `<button class="btn secondary small" data-save-sale="${pr.id}" style="margin-top:8px;">Lưu danh sách Sale</button>` : ''}
+        </div>`;
+      }
+
       function buildPriceHtml(it) {
         let lastGroup = null;
         const rows = catsSorted.map(c => {
@@ -178,6 +199,7 @@ export async function render(container, profile, isStale = () => false) {
           </div>
           ${Object.keys(it.ovr).length ? '<div class="note-box" style="margin:8px 0 0;">* Đơn giá riêng cho dự án này, khác giá khung mặc định.</div>' : ''}
           ${it.project ? `<button class="btn secondary small" data-set-rate="${it.key}" style="margin-top:10px;">+ Đặt giá riêng cho dự án này</button>` : ''}
+          ${it.project && isAdmin ? buildSaleBlock(it.project) : ''}
         </div>`;
       }
 
@@ -196,6 +218,23 @@ export async function render(container, profile, isStale = () => false) {
         priceRow.firstElementChild.innerHTML = buildPriceHtml(it);
         const btn = priceRow.querySelector('[data-set-rate]');
         if (btn) btn.addEventListener('click', () => openRateModal(partner, it.project));
+        const saveSale = priceRow.querySelector('[data-save-sale]');
+        if (saveSale) saveSale.addEventListener('click', async () => {
+          const pid = saveSale.dataset.saveSale;
+          const picked = [...priceRow.querySelectorAll(`[data-sale-list="${pid}"] input:checked`)].map(i => i.value);
+          saveSale.disabled = true; saveSale.textContent = 'Đang lưu...';
+          const del = await supabase.from('sale_project_assignments').delete().eq('project_id', pid);
+          let err = del.error;
+          if (!err && picked.length) {
+            err = (await supabase.from('sale_project_assignments').insert(picked.map(user_id => ({ user_id, project_id: pid })))).error;
+          }
+          if (err) { alert('Lỗi lưu: ' + err.message); }
+          else {
+            for (let i = assigns.length - 1; i >= 0; i--) if (assigns[i].project_id === pid) assigns.splice(i, 1);
+            picked.forEach(user_id => assigns.push({ user_id, project_id: pid }));
+          }
+          saveSale.disabled = false; saveSale.textContent = err ? 'Lưu danh sách Sale' : 'Đã lưu ✓';
+        });
         headRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
 
