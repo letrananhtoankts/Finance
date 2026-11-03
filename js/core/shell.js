@@ -4,7 +4,8 @@
 // Trên di động: sidebar ẩn sau nút 3 gạch (☰), cộng thêm 1 thanh 4 tab quan trọng
 // nhất cố định ở đáy màn hình để bấm nhanh — giống app VELA Hồ Sơ TC.
 
-import { roleLabel, signOut } from './auth.js';
+import { roleLabel, signOut, changeOwnPassword, MIN_PASSWORD_LENGTH } from './auth.js';
+import { openModal, closeModal } from './modal.js';
 
 const ROUTE_GROUPS = [
   {
@@ -55,13 +56,51 @@ function renderTopbar(profile) {
     <div class="user">
       <span>${profile.full_name}</span>
       <span class="role-chip">${roleLabel(profile.role)}</span>
+      <button id="btnChangePw">Đổi mật khẩu</button>
       <button id="btnSignOut">Đăng xuất</button>
     </div>
   `;
   document.getElementById('btnSignOut').addEventListener('click', signOut);
+  document.getElementById('btnChangePw').addEventListener('click', openChangePasswordModal);
   document.getElementById('btnMobileMenu').addEventListener('click', () => {
     document.getElementById('sidebar')?.classList.add('open');
     document.getElementById('sidebarBackdrop')?.classList.add('open');
+  });
+}
+
+function openChangePasswordModal() {
+  openModal({
+    title: 'Đổi mật khẩu',
+    bodyHtml: `
+      <div class="field"><label>Mật khẩu hiện tại</label><input type="password" id="pwCurrent" autocomplete="current-password"></div>
+      <div class="field"><label>Mật khẩu mới (tối thiểu ${MIN_PASSWORD_LENGTH} ký tự)</label><input type="password" id="pwNew" autocomplete="new-password"></div>
+      <div class="field"><label>Nhập lại mật khẩu mới</label><input type="password" id="pwNew2" autocomplete="new-password"></div>
+      <div id="pwMsg"></div>
+    `,
+    footerHtml: `<button class="btn secondary" id="pwCancel">Hủy</button><button class="btn" id="pwSave">Đổi mật khẩu</button>`,
+    onMount: (dlg) => {
+      const msg = dlg.querySelector('#pwMsg');
+      const saveBtn = dlg.querySelector('#pwSave');
+      dlg.querySelector('#pwCancel').addEventListener('click', closeModal);
+      saveBtn.addEventListener('click', async () => {
+        const cur = dlg.querySelector('#pwCurrent').value;
+        const n1 = dlg.querySelector('#pwNew').value;
+        const n2 = dlg.querySelector('#pwNew2').value;
+        if (!cur || !n1) { msg.innerHTML = '<div class="error-box">Vui lòng nhập đầy đủ các ô.</div>'; return; }
+        if (n1 !== n2) { msg.innerHTML = '<div class="error-box">Hai ô mật khẩu mới không khớp.</div>'; return; }
+        saveBtn.disabled = true;
+        msg.innerHTML = '';
+        try {
+          await changeOwnPassword(cur, n1);
+          msg.innerHTML = '<div class="info-box">Đã đổi mật khẩu thành công.</div>';
+          saveBtn.style.display = 'none';
+          dlg.querySelector('#pwCancel').textContent = 'Đóng';
+        } catch (err) {
+          msg.innerHTML = `<div class="error-box">${err.message}</div>`;
+          saveBtn.disabled = false;
+        }
+      });
+    },
   });
 }
 
