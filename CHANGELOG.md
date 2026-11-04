@@ -1,5 +1,8 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Sửa lỗi hiển thị ô tick ở màn Người dùng
+- Ô tick chọn khách hàng / dự án gán riêng bị kéo giãn và lệch xa tên; đã đặt lại kích thước đúng.
+
 ## [Chưa phát hành] — Đăng nhập bằng ID
 - **Đăng nhập:** ô nhập đổi thành "ID đăng nhập"; ID không có `@` được tự thêm đuôi `@truongthinhequip.com`. Vẫn đăng nhập được bằng email đầy đủ.
 - **Người dùng:** tạo tài khoản bằng ID; cột hiển thị ID.
