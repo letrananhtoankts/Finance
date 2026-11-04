@@ -1,5 +1,11 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Giao nhận theo dự án
+- **Giao nhận** mở ra **danh sách dự án** (Sale chỉ thấy dự án mình phụ trách), có ô gõ tìm; mỗi dự án hiện số phiếu nhập vào, xuất ra, số phiếu chờ xác nhận, ngày phiếu gần nhất. Dự án có phiếu chờ xác nhận xếp lên đầu.
+- Bấm một dự án để xem phiếu: **NHẬP VÀO dự án** nằm trên, **XUẤT RA khỏi dự án** nằm dưới; mỗi phần xếp theo thời gian (nút đổi Mới nhất/Cũ nhất ở trên).
+- Phiếu điều chuyển giữa hai dự án hiện ở **cả hai dự án** (nhập vào ở dự án nhận, xuất ra ở dự án gửi).
+- Link chia sẻ phiếu (`?note=`) vẫn mở thẳng đúng phiếu. Không thay đổi CSDL.
+
 ## [Chưa phát hành] — Cập nhật hiện ngay sau khi Merge
 - Service worker (v3): luôn hỏi lại máy chủ khi tải file, nên bản mới hiện ngay thay vì phải chờ ~10 phút do trình duyệt giữ file cũ.
 - Không thay đổi CSDL.
