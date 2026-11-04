@@ -1,9 +1,9 @@
 // service-worker.js
 // Mở nhanh và cài như app, nhưng LUÔN lấy bản mới nhất khi có mạng (network-first).
 // Chỉ dùng bộ nhớ đệm khi mất mạng. KHÔNG cache dữ liệu Supabase.
-// Muốn ép mọi máy bỏ bản cũ: tăng số phiên bản bên dưới (v2 -> v3 ...).
+// Muốn ép mọi máy bỏ bản cũ: tăng số phiên bản bên dưới (v3 -> v4 ...).
 
-const CACHE_NAME = 'ttequip-shell-v2';
+const CACHE_NAME = 'ttequip-shell-v3';
 const SHELL_FILES = [
   './index.html',
   './login.html',
@@ -37,7 +37,9 @@ self.addEventListener('fetch', (event) => {
 
   // Network-first: có mạng thì lấy bản mới và lưu lại; mất mạng thì dùng bản đã lưu
   event.respondWith(
-    fetch(req)
+    // cache:'no-cache' = luôn hỏi lại máy chủ xem file có đổi không (GitHub Pages mặc định cho
+    // trình duyệt giữ file ~10 phút nên bản mới có thể chưa hiện dù đã Merge)
+    fetch(req, { cache: 'no-cache' })
       .then((res) => {
         if (res && res.ok) {
           const copy = res.clone();
