@@ -89,13 +89,15 @@ export async function render(container, profile, isStale = () => false) {
       const rows = items.map(c => `<tr>
         <td>${esc(c.name)}</td><td>${esc(c.unit)}</td>
         <td class="num">${fmtVND(c.ref_value)}</td>
+        <td class="num">${c.weight_kg != null ? Number(c.weight_kg).toLocaleString('vi-VN') : '—'}</td>
+        <td>${esc(c.coating || '—')}</td>
         <td>${c.is_convertible ? '<span class="badge chinh">Có</span>' : '—'}</td>
         <td><button class="btn secondary small" data-edit-cat="${c.id}">Sửa</button></td>
       </tr>`).join('');
 
       dialog.querySelector('#catInGroupTable').innerHTML = `
-        <thead><tr><th>Tên thiết bị &amp; quy cách</th><th>ĐVT</th><th class="num">Trị giá TS</th><th>Quy đổi</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="5" class="empty-state">Chưa có thiết bị nào trong nhóm này</td></tr>'}</tbody>`;
+        <thead><tr><th>Tên thiết bị &amp; quy cách</th><th>ĐVT</th><th class="num">Trị giá TS</th><th class="num">TL (kg)</th><th>Lớp mạ</th><th>Quy đổi</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="empty-state">Chưa có thiết bị nào trong nhóm này</td></tr>'}</tbody>`;
 
       dialog.querySelectorAll('[data-edit-cat]').forEach(btn =>
         btn.addEventListener('click', () => openCatModal(categories.find(c => c.id === btn.dataset.editCat), group, renderItems)));
@@ -119,6 +121,10 @@ export async function render(container, profile, isStale = () => false) {
         <div class="field"><label>Đơn vị tính</label><input type="text" id="cUnit" value="${existing?.unit ?? ''}" placeholder="Cây / Cái / Thanh..."></div>
         <div class="field"><label>Trị giá thiết bị (đơn giá đền bù tham chiếu)</label><input type="number" id="cRefValue" value="${existing?.ref_value ?? ''}"></div>
       </div>
+      <div class="field-row">
+        <div class="field"><label>Trọng lượng (kg, ±5%)</label><input type="number" step="0.1" id="cWeight" value="${existing?.weight_kg ?? ''}"></div>
+        <div class="field"><label>Lớp mạ / hoàn thiện</label><input type="text" id="cCoating" value="${existing?.coating ?? ''}" placeholder="Kẽm nóng / Kẽm lạnh / Sơn dầu..."></div>
+      </div>
       <div class="field"><label><input type="checkbox" id="cConvertible" ${existing?.is_convertible ? 'checked' : ''} style="width:auto; margin-right:6px;">Cho phép quy đổi quy cách khi trả (xà gồ/thép hộp)</label></div>
     `;
     const footerHtml = `<button class="btn secondary" id="cCancel">Hủy</button><button class="btn" id="cSubmit">${isNew ? 'Thêm thiết bị' : 'Lưu thay đổi'}</button>`;
@@ -131,6 +137,8 @@ export async function render(container, profile, isStale = () => false) {
         name: dialog.querySelector('#cName').value.trim(),
         unit: dialog.querySelector('#cUnit').value.trim(),
         ref_value: parseFloat(dialog.querySelector('#cRefValue').value) || 0,
+        weight_kg: parseFloat(dialog.querySelector('#cWeight').value) || null,
+        coating: dialog.querySelector('#cCoating').value.trim() || null,
         is_convertible: dialog.querySelector('#cConvertible').checked,
       };
       if (!payload.name || !payload.unit) { alert('Nhập đủ tên thiết bị và đơn vị tính.'); return; }

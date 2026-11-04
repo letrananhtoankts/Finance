@@ -1,5 +1,13 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Danh mục chuẩn Trường Thịnh (bảng giá 01/10/2026)
+- **Danh mục**: thêm 2 cột **Trọng lượng (kg, ±5%)** và **Lớp mạ** (kẽm nóng/kẽm lạnh/sơn dầu/gang đúc/xi mạ); xem và sửa được ở từng thiết bị.
+- Thêm **Xà gồ vuông 50x50x1.8, L=1500** (trị giá 84.000, 4,2 kg).
+- Sửa trị giá **Xà gồ hộp L=1500**: 123.000 → 124.000.
+- Gộp mã trùng: `XGH1500B` → `XGH1500`; `CD1200` → `NECD1200` (toàn bộ phiếu, tài sản, đơn giá, kế hoạch chuyển sang mã giữ lại).
+- Sắp xếp lại thứ tự và nạp trọng lượng + lớp mạ cho cả 50 chủng loại theo bảng giá chuẩn.
+- **Cần chạy SQL** `sql/2026-11-04_danh-muc-chuan.sql` trên Supabase TRƯỚC khi Merge (thêm cột mới).
+
 ## [Chưa phát hành] — Đổi mật khẩu
 - Thanh trên cùng (mọi vai trò): thêm nút **Đổi mật khẩu** cạnh nút Đăng xuất.
 - Cửa sổ đổi mật khẩu: nhập mật khẩu hiện tại, mật khẩu mới (tối thiểu 8 ký tự), nhập lại để xác nhận.
