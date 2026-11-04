@@ -1,5 +1,12 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Tab Đơn hàng
+- **Đơn hàng** (mục mới): mỗi dự án có **đơn hàng tổng** (tổng dự án cần, dùng chung số liệu với Kế hoạch) và các **đơn đặt thực tế** (đơn 1, 2, 3...) có dòng chủng loại, tiền cọc, ngày thu cọc, trạng thái.
+- Khối lượng tính theo **tấn** (số lượng × trọng lượng chủng loại). Lượng **đã giao tới dự án** là con số chung của dự án (không gắn xe nào vào đơn nào).
+- Cảnh báo: **vàng từ 90%, cam từ 95%, đỏ khi vượt 100%** tổng đơn đã đặt — cần đặt đơn mới để bù.
+- Sale (dự án được phân), Kế toán, Admin được nhập; các vai trò khác chỉ xem.
+- **Cần chạy SQL** `sql/2026-11-04_don-hang.sql` trên Supabase TRƯỚC khi Merge (thêm 2 bảng).
+
 ## [Chưa phát hành] — Hiện ảnh giao nhận dưới phiếu
 - **Giao nhận → chi tiết phiếu**: ảnh giao nhận hiện thành các ô xem trước ngay dưới phiếu (nhiều tấm), bấm vào ô để mở ảnh lớn; PDF hiện ô biểu tượng.
 - Có ô **+ Thêm ảnh** để tải thêm nhiều ảnh/file một lần.
