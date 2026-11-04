@@ -1,5 +1,11 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Đơn hàng làm lại theo dự án
+- **Đơn hàng** mở ra **danh sách dự án** (Sale chỉ thấy dự án mình phụ trách) kèm Tổng cần / Đã đặt / **Đã cấp về** (tấn), % cấp/đặt và cảnh báo màu: xanh (an toàn), vàng (≥90%), cam (≥95%), đỏ (vượt đơn hoặc chưa có đơn mà đã có hàng về). Dự án nguy hiểm xếp lên đầu; có ô gõ tìm.
+- Bấm một dự án: **bảng theo dõi đơn hàng** đúng mẫu — Chủng loại | Tổng cần | ĐH01, ĐH02… | Tổng đặt | **Đã cấp về** | Còn lại | Cấp/Đặt, tô màu từng dòng; các đơn sổ dọc bên dưới (bấm để mở, sửa/xóa).
+- **Đã cấp về** = tổng SL xuất của các phiếu giao nhận nhập vào dự án (không trừ hàng trả đi, khác tồn kho).
+- Không thay đổi CSDL.
+
 ## [Chưa phát hành] — Giao nhận theo dự án
 - **Giao nhận** mở ra **danh sách dự án** (Sale chỉ thấy dự án mình phụ trách), có ô gõ tìm; mỗi dự án hiện số phiếu nhập vào, xuất ra, số phiếu chờ xác nhận, ngày phiếu gần nhất. Dự án có phiếu chờ xác nhận xếp lên đầu.
 - Bấm một dự án để xem phiếu: **NHẬP VÀO dự án** nằm trên, **XUẤT RA khỏi dự án** nằm dưới; mỗi phần xếp theo thời gian (nút đổi Mới nhất/Cũ nhất ở trên).
