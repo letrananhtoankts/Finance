@@ -101,10 +101,12 @@ export async function render(container, profile, isStale = () => false) {
       </div>
       <div class="field" id="uPartnerField" style="display:${existing?.role === 'sale' ? 'block' : 'none'};">
         <label>Khách hàng phụ trách (chọn nhiều)</label>
+        <input type="text" class="ck-filter" data-filter-for="uPartners" placeholder="Gõ số hoặc tên khách hàng để lọc…" style="margin-bottom:6px;">
         <div id="uPartners" style="max-height:170px; overflow-y:auto; border:1px solid var(--line); border-radius:6px; padding:6px 10px;">
           ${partnerList.map(p => `<label style="display:flex; gap:8px; align-items:center; margin:4px 0; font-size:.84rem; color:var(--ink);"><input type="checkbox" style="width:auto; flex:none; margin:0;" value="${p.id}" ${(partnerAssign[existing?.id] ?? []).includes(p.id) ? 'checked' : ''}> ${esc(p.name)}</label>`).join('') || '<span style="color:var(--ink-soft);">Chưa có khách hàng</span>'}
         </div>
         <label style="margin-top:12px;">Dự án gán riêng (thêm ngoài các khách hàng ở trên)</label>
+        <input type="text" class="ck-filter" data-filter-for="uProjects" placeholder="Gõ số hoặc tên dự án để lọc…" style="margin-bottom:6px;">
         <div id="uProjects" style="max-height:200px; overflow-y:auto; border:1px solid var(--line); border-radius:6px; padding:6px 10px;">
           ${projectList.map(j => `<label style="display:flex; gap:8px; align-items:center; margin:4px 0; font-size:.84rem; color:var(--ink);"><input type="checkbox" style="width:auto; flex:none; margin:0;" value="${j.id}" ${(projectAssign[existing?.id] ?? []).includes(j.id) ? 'checked' : ''}> ${esc(j.name)} <span style="color:var(--ink-soft); font-size:.74rem;">— ${esc(partnerList.find(p => p.id === j.partner_id)?.name ?? '')}</span></label>`).join('') || '<span style="color:var(--ink-soft);">Chưa có dự án</span>'}
         </div>
@@ -114,6 +116,16 @@ export async function render(container, profile, isStale = () => false) {
     `;
     const footerHtml = `<button class="btn secondary" id="uCancel">Hủy</button><button class="btn" id="uSubmit">${isNew ? 'Tạo tài khoản' : 'Lưu thay đổi'}</button>`;
     const dialog = openModal({ title: isNew ? 'Thêm người dùng' : `Sửa — ${existing.full_name ?? existing.email}`, bodyHtml, footerHtml });
+
+    // Ô gõ lọc cho danh sách tick khách hàng / dự án (danh sách dài, khỏi kéo lên xuống)
+    const stripVi = (t) => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+    dialog.querySelectorAll('.ck-filter').forEach(inp => inp.addEventListener('input', () => {
+      const tokens = stripVi(inp.value).split(/\s+/).filter(Boolean);
+      dialog.querySelectorAll(`#${inp.dataset.filterFor} label`).forEach(l => {
+        const txt = stripVi(l.textContent);
+        l.style.display = tokens.every(t => txt.includes(t)) ? 'flex' : 'none';
+      });
+    }));
 
     dialog.querySelector('#uRole').addEventListener('change', (e) => {
       dialog.querySelector('#uPartnerField').style.display = e.target.value === 'sale' ? 'block' : 'none';

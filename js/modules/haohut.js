@@ -1,6 +1,7 @@
 // js/modules/haohut.js
 import { supabase } from '../core/config.js';
 import { fmtVND, fmtDate, esc } from '../core/utils.js';
+import { enhanceSelect } from '../core/searchSelect.js';
 import { openModal, closeModal } from '../core/modal.js';
 
 export async function render(container, profile, isStale = () => false) {
@@ -36,6 +37,8 @@ export async function render(container, profile, isStale = () => false) {
 
   container.querySelector('#fProject').innerHTML = projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
   container.querySelector('#fCategory').innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  enhanceSelect(container.querySelector('#fProject'), { placeholder: 'Gõ số hoặc tên dự án…' });
+  enhanceSelect(container.querySelector('#fCategory'), { placeholder: 'Gõ tên chủng loại…' });
 
   const catName = (id) => categories.find(c => c.id === id)?.name ?? '(?)';
   const catUnit = (id) => categories.find(c => c.id === id)?.unit ?? '';

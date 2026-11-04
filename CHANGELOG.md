@@ -1,5 +1,10 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Lọc dự án bằng cách gõ
+- Các ô chọn dự án (**Giao nhận** lọc + chọn nơi xuất/nhập, **Hao hụt**, **Đơn hàng**, **Bảng kê → dòng điều chỉnh**) đổi từ danh sách kéo thành **ô gõ để lọc**: gõ số hoặc một phần tên (không cần dấu), bấm hoặc Enter để chọn; phím mũi tên lên/xuống chọn.
+- **Người dùng**: danh sách tick khách hàng và dự án có ô gõ lọc.
+- Không thay đổi CSDL.
+
 ## [Chưa phát hành] — Tab Đơn hàng
 - **Đơn hàng** (mục mới): mỗi dự án có **đơn hàng tổng** (tổng dự án cần, dùng chung số liệu với Kế hoạch) và các **đơn đặt thực tế** (đơn 1, 2, 3...) có dòng chủng loại, tiền cọc, ngày thu cọc, trạng thái.
 - Khối lượng tính theo **tấn** (số lượng × trọng lượng chủng loại). Lượng **đã giao tới dự án** là con số chung của dự án (không gắn xe nào vào đơn nào).

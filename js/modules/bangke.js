@@ -1,4 +1,5 @@
 // js/modules/bangke.js
+import { enhanceSelect } from '../core/searchSelect.js';
 import { supabase } from '../core/config.js';
 import { openModal, closeModal } from '../core/modal.js';
 import { fmtVND, fmtNum, fmtDate, todayStr, addDaysStr, esc } from '../core/utils.js';
@@ -342,6 +343,7 @@ export async function render(container, profile, isStale = () => false) {
     `;
     const footerHtml = `<button class="btn secondary" id="jaCancel">Hủy</button><button class="btn" id="jaSubmit">Tạo dòng điều chỉnh</button>`;
     const dialog = openModal({ title: 'Tạo dòng điều chỉnh', bodyHtml, footerHtml });
+    enhanceSelect(dialog.querySelector('#jaProject'), { placeholder: 'Gõ số hoặc tên dự án…' });
 
     dialog.querySelector('#jaCancel').addEventListener('click', closeModal);
     dialog.querySelector('#jaSubmit').addEventListener('click', async () => {
