@@ -10,7 +10,7 @@ import { openModal, closeModal } from './modal.js';
 const ROUTE_GROUPS = [
   {
     label: 'Tổng quan',
-    routes: [{ key: '', module: 'dashboard', label: 'Tổng quan', icon: '◈', quick: true }],
+    routes: [{ key: '', module: 'dashboard', label: 'Tổng quan', icon: '◈', quick: true, hideForRoles: ['sale'] }],
   },
   {
     label: 'Nghiệp vụ',
@@ -33,15 +33,27 @@ const ROUTE_GROUPS = [
   },
 ];
 
+let currentRole = null;
+
+// Route nào bị ẩn với vai trò hiện tại (VD Sale không thấy Tổng quan).
+function isHidden(r) {
+  return !!(r.hideForRoles && r.hideForRoles.includes(currentRole));
+}
+
 function allRoutes() {
-  return ROUTE_GROUPS.flatMap(g => g.routes);
+  return ROUTE_GROUPS.flatMap(g => g.routes).filter(r => !isHidden(r));
+}
+
+// Trang mở đầu của từng vai trò: Sale vào thẳng Giao nhận, các vai trò khác vào Tổng quan.
+function homeKey() {
+  return currentRole === 'sale' ? 'giaonhan' : '';
 }
 
 // Bỏ phần tham số sau dấu "?" (nếu có, VD "giaonhan?note=xxx") trước khi so khớp route —
 // để link chia sẻ kèm tham số vẫn nhận đúng trang, không bị coi là route lạ.
 function currentRouteKey() {
   const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0];
-  return allRoutes().some(r => r.key === hash) ? hash : '';
+  return allRoutes().some(r => r.key === hash) ? hash : homeKey();
 }
 
 function closeSidebar() {
@@ -107,6 +119,8 @@ function openChangePasswordModal() {
 function renderSidebar(profile, activeKey) {
   const groupsHtml = ROUTE_GROUPS
     .filter(g => !g.adminOnly || profile.role === 'admin')
+    .map(g => ({ ...g, routes: g.routes.filter(r => !isHidden(r)) }))
+    .filter(g => g.routes.length > 0)
     .map(g => `
       <div class="group-label">${g.label}</div>
       <nav class="nav">
@@ -169,10 +183,16 @@ async function loadRoute(profile) {
 }
 
 export function initShell(profile) {
+  currentRole = profile.role;
   ensureSidebarBackdrop();
   renderTopbar(profile);
   renderSidebar(profile, currentRouteKey());
   renderBottomNav(currentRouteKey());
+  // Link cũ trỏ vào trang đã ẩn (VD #/ với Sale) -> đưa về trang mở đầu.
+  const rawHash = window.location.hash.replace(/^#\/?/, '').split('?')[0];
+  if (rawHash !== currentRouteKey() && !(rawHash === '' && currentRouteKey() === '')) {
+    window.location.hash = '#/' + currentRouteKey();
+  }
   window.addEventListener('hashchange', () => {
     loadRoute(profile);
     renderBottomNav(currentRouteKey());
