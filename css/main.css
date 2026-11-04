@@ -113,6 +113,13 @@ input, select, textarea{ border-radius:5px; }
 .attach-row{ padding:8px 0; display:flex; gap:8px; flex-wrap:wrap; }
 .attach-chip{ display:inline-flex; align-items:center; gap:5px; background:var(--gray-tint); border:1px solid var(--line); padding:4px 10px; font-size:.76rem; color:var(--ink-soft); border-radius:20px; cursor:pointer; }
 .attach-chip:hover{ border-color:var(--ink-soft); }
+.attach-head{ font-size:.76rem; color:var(--ink-soft); margin:10px 0 6px; font-weight:600; }
+.attach-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(104px, 1fr)); gap:8px; padding-bottom:10px; }
+.attach-tile{ aspect-ratio:1; border:1px solid var(--line); border-radius:6px; background:var(--gray-tint); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; overflow:hidden; cursor:pointer; color:var(--ink-soft); font-size:1.3rem; }
+.attach-tile:hover{ border-color:var(--ink-soft); }
+.attach-tile img{ width:100%; height:100%; object-fit:cover; display:block; }
+.attach-tile small{ font-size:.7rem; text-align:center; padding:0 4px; }
+.attach-tile.add{ border-style:dashed; }
 
 /* ---------- approval UI ---------- */
 .approval-card{ border:1px solid var(--line); background:#fff; border-radius:8px; margin-bottom:12px; overflow:hidden; }

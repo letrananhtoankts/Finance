@@ -37,20 +37,47 @@ export async function renderAttachmentRow(transferNoteId) {
   const { data, error } = await supabase
     .from('transfer_note_attachments')
     .select('*')
-    .eq('transfer_note_id', transferNoteId);
+    .eq('transfer_note_id', transferNoteId)
+    .order('uploaded_at', { ascending: true });
 
-  const chips = (!error && data ? data : []).map(a => {
-    const icon = a.file_type === 'pdf_scan' ? '📎' : '📷';
-    const label = a.file_type === 'pdf_scan' ? 'Phiếu ký (scan)' : 'Ảnh giao nhận';
-    return `<span class="attach-chip" data-view-key="${a.r2_key}">${icon} ${label}</span>`;
-  });
+  const files = (!error && data) ? data : [];
+  // Ảnh hiện thành ô xem trước ngay dưới phiếu (nhiều tấm); PDF hiện ô biểu tượng.
+  const tiles = files.map((a, i) => a.file_type === 'pdf_scan'
+    ? `<div class="attach-tile pdf" data-view-key="${a.r2_key}" title="Phiếu ký (scan)"><span>📎</span><small>Phiếu ký (scan)</small></div>`
+    : `<div class="attach-tile" data-view-key="${a.r2_key}" data-thumb-key="${a.r2_key}" title="Ảnh giao nhận ${i + 1}"><span class="thumb-loading">…</span></div>`);
 
-  return `<div class="attach-row">
-    ${chips.join('')}
-    <label class="attach-chip" style="cursor:pointer;">+ Thêm file
+  return `<div class="attach-head">Ảnh / file giao nhận (${files.length})</div>
+  <div class="attach-grid">
+    ${tiles.join('')}
+    <label class="attach-tile add" title="Thêm ảnh / file">
+      <span>+</span><small>Thêm ảnh</small>
       <input type="file" data-upload-input="${transferNoteId}" style="display:none;" multiple accept=".pdf,image/*">
     </label>
   </div>`;
+}
+
+// Tải ảnh xem trước: file nằm sau Worker cần token nên phải fetch rồi tạo blob URL.
+const thumbCache = new Map();
+async function fetchBlobUrl(key) {
+  if (thumbCache.has(key)) return thumbCache.get(key);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('no session');
+  const res = await fetch(`${WORKER_URL}/${key}`, { headers: { Authorization: `Bearer ${session.access_token}` } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const url = URL.createObjectURL(await res.blob());
+  thumbCache.set(key, url);
+  return url;
+}
+
+function loadThumbs(container) {
+  container.querySelectorAll('[data-thumb-key]').forEach(async tile => {
+    try {
+      const url = await fetchBlobUrl(tile.dataset.thumbKey);
+      tile.innerHTML = `<img src="${url}" alt="Ảnh giao nhận">`;
+    } catch {
+      tile.innerHTML = '<span title="Không tải được ảnh">⚠</span>';
+    }
+  });
 }
 
 // Xem file — KHÔNG dùng link <a href> thường vì trình duyệt không gửi kèm thông
@@ -61,12 +88,7 @@ async function viewAttachment(key) {
   if (!session) { alert('Phiên đăng nhập đã hết, tải lại trang và đăng nhập lại.'); return; }
 
   try {
-    const res = await fetch(`${WORKER_URL}/${key}`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    if (!res.ok) throw new Error('Không xem được file (' + res.status + ')');
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
+    const url = await fetchBlobUrl(key);
     window.open(url, '_blank');
   } catch (err) {
     alert('Lỗi mở file: ' + err.message);
@@ -74,6 +96,7 @@ async function viewAttachment(key) {
 }
 
 export function bindAttachmentEvents(container, uploaderId, onUploaded) {
+  loadThumbs(container);
   container.querySelectorAll('[data-view-key]').forEach(chip => {
     chip.addEventListener('click', () => viewAttachment(chip.dataset.viewKey));
   });
