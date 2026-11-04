@@ -1,5 +1,10 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Hiện ảnh giao nhận dưới phiếu
+- **Giao nhận → chi tiết phiếu**: ảnh giao nhận hiện thành các ô xem trước ngay dưới phiếu (nhiều tấm), bấm vào ô để mở ảnh lớn; PDF hiện ô biểu tượng.
+- Có ô **+ Thêm ảnh** để tải thêm nhiều ảnh/file một lần.
+- Không thay đổi CSDL.
+
 ## [Chưa phát hành] — Sale không thấy Tổng quan
 - Vai trò **Sale**: ẩn mục **Tổng quan** (tổng giá trị tài sản công ty) ở thanh bên và thanh dưới điện thoại.
 - Sale đăng nhập vào thẳng **Giao nhận**; link cũ trỏ vào Tổng quan cũng tự chuyển sang Giao nhận.
