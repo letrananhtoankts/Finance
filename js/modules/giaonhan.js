@@ -12,7 +12,7 @@ export async function render(container, profile, isStale = () => false) {
       <div><h1>Giao nhận</h1><div class="sub">Theo dõi theo từng phiếu, xác nhận trong 3 ngày làm việc</div></div>
       <button class="btn" id="btnNewPhieu">+ Tạo phiếu giao nhận mới</button>
     </div>
-    <div class="toolbar"><select id="gnFilterProject"><option value="">Tất cả dự án</option></select></div>
+    <div id="gnNav"></div>
     <div class="note-box">Xác nhận thực nhận: mặc định bằng đúng số hàng xuất, sửa dòng nào bị lệch. Nhận thêm chủng loại không có trong phiếu gốc thì khai báo ở "Dòng phát sinh khi nhận".</div>
     <div id="phieuList" class="loading">Đang tải...</div>
   `;
@@ -28,9 +28,8 @@ export async function render(container, profile, isStale = () => false) {
   if (isStale()) return;
   const categories = c ?? [], projects = p ?? [], warehouses = w ?? [], vehicleTypes = vt ?? [], carriers = tc ?? [], companyVehicles = cv ?? [];
 
-  container.querySelector('#gnFilterProject').innerHTML = '<option value="">Tất cả dự án</option>' +
-    projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-  enhanceSelect(container.querySelector('#gnFilterProject'), { placeholder: 'Gõ số hoặc tên dự án để lọc…' });
+  let currentProject = null;   // null = màn danh sách dự án; có giá trị = đang xem phiếu của 1 dự án
+  let sortDesc = true;         // true = mới nhất ở trên
 
   const catName = (id) => categories.find(c => c.id === id)?.name ?? '(?)';
   const catUnit = (id) => categories.find(c => c.id === id)?.unit ?? '';
@@ -58,7 +57,6 @@ export async function render(container, profile, isStale = () => false) {
   }
 
   container.querySelector('#btnNewPhieu').addEventListener('click', () => openNewPhieuModal());
-  container.querySelector('#gnFilterProject').addEventListener('change', loadPhieu);
 
   // ================= TẠO PHIẾU MỚI =================
   async function openNewPhieuModal() {
@@ -400,21 +398,15 @@ export async function render(container, profile, isStale = () => false) {
     }
   }
 
-  // ================= DANH SÁCH PHIẾU (bảng gọn, bấm vào xem chi tiết) =================
-  async function loadPhieu() {
-    const filterProject = container.querySelector('#gnFilterProject').value;
-    let q = supabase.from('transfer_notes')
-      .select('*, transfer_note_items(*)')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (filterProject) {
-      q = q.or(`and(from_location_type.eq.du_an,from_location_id.eq.${filterProject}),and(to_location_type.eq.du_an,to_location_id.eq.${filterProject}),project_id.eq.${filterProject}`);
-    }
+  // ================= DANH SÁCH PHIẾU: bấm Giao nhận -> các dự án -> bấm 1 dự án -> phiếu =================
+  // Trong 1 dự án: phiếu NHẬP VÀO dự án nằm trên, phiếu XUẤT RA khỏi dự án nằm dưới,
+  // mỗi phần xếp theo thời gian. Phiếu điều chuyển giữa 2 dự án hiện ở CẢ HAI dự án.
+  const stripVi = (t) => String(t ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+  const isInto = (n, pid) => (n.to_location_type === 'du_an' && n.to_location_id === pid) || (!n.to_location_type && n.project_id === pid && n.direction === 'xuat_du_an');
+  const isOutOf = (n, pid) => (n.from_location_type === 'du_an' && n.from_location_id === pid) || (!n.from_location_type && n.project_id === pid && n.direction === 'nhap_kho');
 
-    const { data: notes, error } = await q;
-    if (isStale()) return;
-    if (error) { container.querySelector('#phieuList').innerHTML = `<div class="error-box">${error.message}</div>`; return; }
-
+  // Phiếu tạm quá 3 ngày tự xác nhận (như trước)
+  async function autoConfirmLate(notes) {
     for (const note of notes) {
       if (note.status === 'tam' && daysBetween(note.ngay_ky, new Date()) > 3) {
         await Promise.all(note.transfer_note_items.map(it =>
@@ -425,43 +417,148 @@ export async function render(container, profile, isStale = () => false) {
         note.transfer_note_items = note.transfer_note_items.map(it => ({ ...it, sl_thuc_nhan: it.sl_xuat }));
       }
     }
+  }
 
+  function openNoteFromLink(notes) {
+    const match = window.location.hash.match(/[?&]note=([^&]+)/);
+    if (!match) return;
+    const targetNote = notes.find(n => n.id === match[1]);
+    if (targetNote) openDetailModal(targetNote);
+  }
+
+  async function loadPhieu() {
+    if (currentProject) return loadProjectView();
+    return loadProjectList();
+  }
+
+  // ---- Màn 1: danh sách dự án (Sale chỉ thấy dự án mình phụ trách nhờ phân quyền) ----
+  async function loadProjectList() {
+    const nav = container.querySelector('#gnNav');
+    const list = container.querySelector('#phieuList');
+    nav.innerHTML = '';
+    container.querySelector('.note-box')?.style.setProperty('display', 'none');
+    list.innerHTML = '<div class="loading">Đang tải...</div>';
+
+    // Link chia sẻ ?note=: mở thẳng dự án chứa phiếu đó
+    const linkNote = window.location.hash.match(/[?&]note=([^&]+)/);
+    if (linkNote) {
+      const { data: n } = await supabase.from('transfer_notes').select('*').eq('id', linkNote[1]).maybeSingle();
+      if (isStale()) return;
+      const pid = n && (n.to_location_type === 'du_an' ? n.to_location_id : n.from_location_type === 'du_an' ? n.from_location_id : n.project_id);
+      if (pid && projects.some(pj => pj.id === pid)) { currentProject = pid; return loadProjectView(); }
+    }
+
+    const { data: notes, error } = await supabase.from('transfer_notes')
+      .select('id, status, ngay_ky, direction, project_id, from_location_type, from_location_id, to_location_type, to_location_id')
+      .order('ngay_ky', { ascending: false }).limit(3000);
+    if (isStale()) return;
+    if (error) { list.innerHTML = `<div class="error-box">${esc(error.message)}</div>`; return; }
+
+    const stats = {};
+    projects.forEach(pj => { stats[pj.id] = { cho: 0, nhap: 0, xuat: 0, last: null }; });
+    (notes ?? []).forEach(n => projects.forEach(pj => {
+      const into = isInto(n, pj.id), out = isOutOf(n, pj.id);
+      if (!into && !out) return;
+      const st = stats[pj.id];
+      if (into) st.nhap++;
+      if (out) st.xuat++;
+      if (n.status === 'tam') st.cho++;
+      if (!st.last || n.ngay_ky > st.last) st.last = n.ngay_ky;
+    }));
+
+    const draw = (text) => {
+      const tokens = stripVi(text).split(/\s+/).filter(Boolean);
+      const rows = projects
+        .filter(pj => tokens.every(t => stripVi(pj.name + ' ' + (pj.code ?? '')).includes(t)))
+        .sort((a, b) => (stats[b.id].cho - stats[a.id].cho) || a.name.localeCompare(b.name, 'vi'))
+        .map(pj => {
+          const st = stats[pj.id];
+          return `<tr data-open-project="${pj.id}" style="cursor:pointer;">
+            <td><b style="color:var(--red-dark);">${esc(pj.name)}</b></td>
+            <td class="num">${st.nhap}</td><td class="num">${st.xuat}</td>
+            <td>${st.cho ? `<span class="badge tam">${st.cho} phiếu chờ xác nhận</span>` : '<span style="color:var(--ink-soft);">—</span>'}</td>
+            <td>${st.last ? fmtDate(st.last) : '—'}</td></tr>`;
+        }).join('');
+      container.querySelector('#gnProjBody').innerHTML = rows || '<tr><td colspan="5" class="empty-state">Không có dự án nào khớp</td></tr>';
+      container.querySelectorAll('[data-open-project]').forEach(tr => tr.addEventListener('click', () => {
+        currentProject = tr.dataset.openProject;
+        window.location.hash = '#/giaonhan'; // bỏ ?note= (nếu có)
+        loadPhieu();
+      }));
+    };
+
+    list.innerHTML = `
+      <div class="toolbar"><input type="text" id="gnProjSearch" placeholder="Gõ số hoặc tên dự án để tìm…" style="max-width:420px; width:100%;"></div>
+      <div class="panel"><div class="panel-body" style="padding:0">
+        <table>
+          <thead><tr><th>Dự án</th><th class="num">Phiếu nhập vào</th><th class="num">Phiếu xuất ra</th><th>Chờ xác nhận</th><th>Phiếu gần nhất</th></tr></thead>
+          <tbody id="gnProjBody"></tbody>
+        </table>
+      </div></div>`;
+    draw('');
+    container.querySelector('#gnProjSearch').addEventListener('input', (e) => draw(e.target.value));
+  }
+
+  // ---- Màn 2: phiếu của 1 dự án — NHẬP VÀO ở trên, XUẤT RA ở dưới ----
+  async function loadProjectView() {
+    const pid = currentProject;
+    const proj = projects.find(pj => pj.id === pid);
+    const nav = container.querySelector('#gnNav');
+    const list = container.querySelector('#phieuList');
+    container.querySelector('.note-box')?.style.removeProperty('display');
+    nav.innerHTML = `<div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+        <button class="btn secondary small" id="gnBack">← Tất cả dự án</button>
+        <h2 style="margin:0;">${esc(proj?.name ?? '(?)')}</h2>
+        <button class="btn secondary small" id="gnSort" style="margin-left:auto;">${sortDesc ? 'Mới nhất ở trên' : 'Cũ nhất ở trên'} ⇅</button>
+      </div>`;
+    nav.querySelector('#gnBack').addEventListener('click', () => { currentProject = null; window.location.hash = '#/giaonhan'; loadPhieu(); });
+    nav.querySelector('#gnSort').addEventListener('click', () => { sortDesc = !sortDesc; loadPhieu(); });
+    list.innerHTML = '<div class="loading">Đang tải...</div>';
+
+    const { data: notes, error } = await supabase.from('transfer_notes')
+      .select('*, transfer_note_items(*)')
+      .or(`and(from_location_type.eq.du_an,from_location_id.eq.${pid}),and(to_location_type.eq.du_an,to_location_id.eq.${pid}),project_id.eq.${pid}`)
+      .order('ngay_ky', { ascending: false }).order('created_at', { ascending: false }).limit(500);
+    if (isStale()) return;
+    if (error) { list.innerHTML = `<div class="error-box">${esc(error.message)}</div>`; return; }
+
+    await autoConfirmLate(notes);
     if (isStale()) return;
 
-    const rows = notes.map(note => {
+    const byTime = (a, b) => {
+      const k = (n) => `${n.ngay_ky}|${n.created_at ?? ''}`;
+      return sortDesc ? k(b).localeCompare(k(a)) : k(a).localeCompare(k(b));
+    };
+    const into = notes.filter(n => isInto(n, pid)).sort(byTime);
+    const out = notes.filter(n => isOutOf(n, pid) && !isInto(n, pid)).sort(byTime);
+
+    const rowHtml = (note, side) => {
       const badge = note.status === 'tam' ? '<span class="badge tam">Chờ xác nhận</span>'
         : note.late_flag ? '<span class="badge tre">Xác nhận trễ</span>'
         : '<span class="badge chinh">Chính thức</span>';
       const tongXuat = note.transfer_note_items.reduce((s, it) => s + Number(it.sl_xuat), 0);
       const tongThucNhan = note.status === 'tam' ? '-' : note.transfer_note_items.reduce((s, it) => s + Number(it.sl_thuc_nhan ?? 0), 0);
+      const other = side === 'in' ? `Từ: ${resolveFrom(note)}` : `Đến: ${resolveTo(note)}`;
       return `<tr data-open-note="${note.id}" style="cursor:pointer;">
         <td><b style="color:var(--red-dark);">${esc(note.code)}</b></td>
-        <td>${esc(resolveFrom(note))} → ${esc(resolveTo(note))}</td>
-        <td>${fmtDate(note.ngay_ky)}</td>
-        <td class="num">${tongXuat}</td>
-        <td class="num">${tongThucNhan}</td>
-        <td>${badge}</td>
-      </tr>`;
-    }).join('');
+        <td>${esc(other)}</td><td>${fmtDate(note.ngay_ky)}</td>
+        <td class="num">${tongXuat}</td><td class="num">${tongThucNhan}</td><td>${badge}</td></tr>`;
+    };
+    const section = (title, color, arr, side) => `
+      <div class="panel" style="margin-bottom:18px;">
+        <div class="panel-head" style="border-left:4px solid ${color};"><h3>${title} <span style="color:var(--ink-soft); font-weight:400;">(${arr.length} phiếu)</span></h3></div>
+        <div class="panel-body" style="padding:0"><table>
+          <thead><tr><th>Số phiếu</th><th>${side === 'in' ? 'Nơi xuất' : 'Nơi nhận'}</th><th>Ngày ký</th><th class="num">SL xuất</th><th class="num">SL thực nhận</th><th>Trạng thái</th></tr></thead>
+          <tbody>${arr.map(n => rowHtml(n, side)).join('') || '<tr><td colspan="6" class="empty-state">Chưa có phiếu</td></tr>'}</tbody>
+        </table></div></div>`;
 
-    container.querySelector('#phieuList').innerHTML = `
-      <div class="panel"><div class="panel-body" style="padding:0">
-        <table>
-          <thead><tr><th>Số phiếu</th><th>Tuyến</th><th>Ngày ký</th><th class="num">SL xuất</th><th class="num">SL thực nhận</th><th>Trạng thái</th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="6" class="empty-state">Chưa có phiếu nào khớp bộ lọc</td></tr>'}</tbody>
-        </table>
-      </div></div>`;
+    list.innerHTML = section('NHẬP VÀO dự án (dự án nhận hàng)', 'var(--green)', into, 'in')
+      + section('XUẤT RA khỏi dự án (trả hàng / chuyển đi)', 'var(--red)', out, 'out');
 
     container.querySelectorAll('[data-open-note]').forEach(tr => {
       tr.addEventListener('click', () => openDetailModal(notes.find(n => n.id === tr.dataset.openNote)));
     });
-
-    // Nếu vào trang qua link chia sẻ (#/giaonhan?note=xxx) thì tự mở đúng phiếu đó
-    const match = window.location.hash.match(/[?&]note=([^&]+)/);
-    if (match) {
-      const targetNote = notes.find(n => n.id === match[1]);
-      if (targetNote) openDetailModal(targetNote);
-    }
+    openNoteFromLink(notes);
   }
 
   await loadPhieu();
