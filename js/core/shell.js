@@ -17,6 +17,7 @@ const ROUTE_GROUPS = [
     routes: [
       { key: 'taisan', module: 'taisan', label: 'Tài sản', icon: '▤', quick: true },
       { key: 'doitac', module: 'doitac', label: 'Đối tác', icon: '◫' },
+      { key: 'donhang', module: 'donhang', label: 'Đơn hàng', icon: '▣' },
       { key: 'giaonhan', module: 'giaonhan', label: 'Giao nhận', icon: '⇄', quick: true },
       { key: 'bangke', module: 'bangke', label: 'Bảng kê', icon: '▦', quick: true },
       { key: 'haohut', module: 'haohut', label: 'Hao hụt', icon: '⚠' },
