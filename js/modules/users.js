@@ -9,6 +9,10 @@ import { esc } from '../core/utils.js';
 const SUPABASE_URL = 'https://shgorgwdphqyxdfwufvu.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoZ29yZ3dkcGhxeXhkZnd1ZnZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NjMwMDgsImV4cCI6MjEwNDIzOTAwOH0.OdUuwrmC_Uc3pEL8pKHR9r_uvQIX_0-3Q5IT81I-XNw';
 
+// ID đăng nhập = phần trước @ của email nội bộ; nhân viên không cần hộp thư thật.
+const LOGIN_DOMAIN = 'truongthinhequip.com';
+const loginId = (email) => (email ?? '').replace('@' + LOGIN_DOMAIN, '');
+
 const ROLES = ['kho', 'sale', 'ke_toan', 'bgd', 'admin'];
 
 export async function render(container, profile, isStale = () => false) {
@@ -57,13 +61,13 @@ export async function render(container, profile, isStale = () => false) {
 
     const rows = (data ?? []).map(u => `<tr>
       <td><b>${esc(u.full_name ?? '(chưa đặt tên)')}</b></td>
-      <td>${esc(u.email ?? '')}</td>
+      <td>${esc(loginId(u.email))}</td>
       <td>${esc(roleLabel(u.role))}</td>
       <td style="font-size:.82rem;">${assignSummary(u)}</td>
       <td><button class="btn secondary small" data-edit-user="${u.id}">Sửa</button></td>
     </tr>`).join('');
 
-    table.innerHTML = `<thead><tr><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Phụ trách</th><th></th></tr></thead>
+    table.innerHTML = `<thead><tr><th>Họ tên</th><th>ID đăng nhập</th><th>Vai trò</th><th>Phụ trách</th><th></th></tr></thead>
       <tbody>${rows || '<tr><td colspan="5" class="empty-state">Chưa có người dùng nào</td></tr>'}</tbody>`;
 
     table.querySelectorAll('[data-edit-user]').forEach(btn =>
@@ -90,7 +94,7 @@ export async function render(container, profile, isStale = () => false) {
     const isNew = !existing;
     const bodyHtml = `
       <div class="field"><label>Họ tên</label><input type="text" id="uFullName" value="${esc(existing?.full_name ?? '')}"></div>
-      <div class="field"><label>Email</label><input type="email" id="uEmail" value="${esc(existing?.email ?? '')}" ${isNew ? '' : 'disabled'}></div>
+      <div class="field"><label>ID đăng nhập</label><input type="text" id="uEmail" value="${esc(loginId(existing?.email))}" placeholder="VD: nguyenvana (viết liền, không dấu)" autocapitalize="none" ${isNew ? '' : 'disabled'}></div>
       ${isNew ? `<div class="field"><label>Mật khẩu tạm</label><input type="text" id="uPassword" placeholder="Ít nhất 6 ký tự"></div>` : ''}
       <div class="field"><label>Vai trò</label>
         <select id="uRole">${ROLES.map(r => `<option value="${r}" ${existing?.role === r ? 'selected' : ''}>${esc(roleLabel(r))}</option>`).join('')}</select>
@@ -131,9 +135,10 @@ export async function render(container, profile, isStale = () => false) {
 
       try {
         if (isNew) {
-          const email = dialog.querySelector('#uEmail').value.trim();
+          const idRaw = dialog.querySelector('#uEmail').value.trim().toLowerCase();
+          const email = idRaw.includes('@') ? idRaw : idRaw + '@' + LOGIN_DOMAIN;
           const password = dialog.querySelector('#uPassword').value;
-          if (!email || !password || password.length < 6) throw new Error('Nhập đủ email và mật khẩu (ít nhất 6 ký tự).');
+          if (!idRaw || !password || password.length < 6) throw new Error('Nhập đủ ID và mật khẩu (ít nhất 6 ký tự).');
 
           const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
           const tempClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

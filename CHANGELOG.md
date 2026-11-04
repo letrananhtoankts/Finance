@@ -1,5 +1,10 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Đăng nhập bằng ID
+- **Đăng nhập:** ô nhập đổi thành "ID đăng nhập"; ID không có `@` được tự thêm đuôi `@truongthinhequip.com`. Vẫn đăng nhập được bằng email đầy đủ.
+- **Người dùng:** tạo tài khoản bằng ID; cột hiển thị ID.
+- Lưu ý: địa chỉ ghép ra không phải hộp thư thật nên không dùng "quên mật khẩu qua email" — admin đặt lại mật khẩu.
+
 ## [Chưa phát hành] — Danh mục chuẩn Trường Thịnh (bảng giá 01/10/2026)
 - **Danh mục**: thêm 2 cột **Trọng lượng (kg, ±5%)** và **Lớp mạ** (kẽm nóng/kẽm lạnh/sơn dầu/gang đúc/xi mạ); xem và sửa được ở từng thiết bị.
 - Thêm **Xà gồ vuông 50x50x1.8, L=1500** (trị giá 84.000, 4,2 kg).

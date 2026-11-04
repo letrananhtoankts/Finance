@@ -21,8 +21,8 @@
   <h1>TRƯỜNG THỊNH</h1>
   <div class="sub">Đăng nhập hệ thống quản lý tài sản thiết bị</div>
 
-  <label for="email">Email</label>
-  <input type="email" id="email" placeholder="ten@truongthinhequip.com" autocomplete="username">
+  <label for="email">ID đăng nhập</label>
+  <input type="text" id="email" placeholder="VD: nguyenvana" autocomplete="username" autocapitalize="none" spellcheck="false">
 
   <label for="password">Mật khẩu</label>
   <input type="password" id="password" autocomplete="current-password">
@@ -41,17 +41,19 @@
   const errorBox = document.getElementById('errorBox');
 
   async function login() {
-    const email = document.getElementById('email').value.trim();
+    // Nhân viên chỉ cần gõ ID; ID không có @ thì tự thêm đuôi nội bộ (không cần hộp thư thật).
+    const idInput = document.getElementById('email').value.trim().toLowerCase();
+    const email = idInput.includes('@') ? idInput : idInput + '@truongthinhequip.com';
     const password = document.getElementById('password').value;
     errorBox.style.display = 'none';
-    if (!email || !password) {
-      errorBox.textContent = 'Nhập đủ email và mật khẩu.';
+    if (!idInput || !password) {
+      errorBox.textContent = 'Nhập đủ ID và mật khẩu.';
       errorBox.style.display = 'block';
       return;
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      errorBox.textContent = 'Sai email hoặc mật khẩu, hoặc tài khoản chưa được cấp quyền.';
+      errorBox.textContent = 'Sai ID hoặc mật khẩu, hoặc tài khoản chưa được cấp quyền.';
       errorBox.style.display = 'block';
       return;
     }
