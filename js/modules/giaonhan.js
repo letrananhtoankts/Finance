@@ -305,7 +305,9 @@ export async function render(container, profile, isStale = () => false) {
     for (const u of updates) {
       await supabase.from('transfer_note_items').update({
         sl_thuc_nhan: u.sl_thuc_nhan,
-        tinh_trang: u.thieu ? 'Thiếu so với phiếu xuất' : u.sl_thuc_nhan > u.sl_xuat ? 'Dư so với phiếu xuất' : 'Đúng chất lượng, mới 100%',
+        qty_thanh_ly: u.thanh_ly ?? 0,
+        qty_tra_lai: u.tra_lai ?? 0,
+        tinh_trang: u.tinh_trang ?? 'Mới',
       }).eq('id', u.itemId);
     }
 
@@ -355,6 +357,7 @@ export async function render(container, profile, isStale = () => false) {
       items: note.transfer_note_items.map(it => ({
         id: it.id, label: catName(it.category_id), unit: catUnit(it.category_id),
         sl_xuat: it.sl_xuat, sl_thuc_nhan: it.sl_thuc_nhan, tinh_trang: it.tinh_trang,
+        qty_thanh_ly: it.qty_thanh_ly, qty_tra_lai: it.qty_tra_lai,
       })),
       categoryOptions: note.status === 'tam' ? categoryOptionsForExtra : null,
       signInfo: `<span>Người giao: <b>${esc(note.nguoi_giao ?? '—')}</b> · QL duyệt: <b>${esc(note.quan_ly_xuat ?? '—')}</b></span>
@@ -411,7 +414,7 @@ export async function render(container, profile, isStale = () => false) {
     for (const note of notes) {
       if (note.status === 'tam' && daysBetween(note.ngay_ky, new Date()) > 3) {
         await Promise.all(note.transfer_note_items.map(it =>
-          supabase.from('transfer_note_items').update({ sl_thuc_nhan: it.sl_xuat, tinh_trang: 'Đúng chất lượng, mới 100%' }).eq('id', it.id)
+          supabase.from('transfer_note_items').update({ sl_thuc_nhan: it.sl_xuat, tinh_trang: 'Mới' }).eq('id', it.id)
         ));
         await supabase.from('transfer_notes').update({ status: 'chinh_thuc', late_flag: true, confirmed_at: new Date().toISOString() }).eq('id', note.id);
         note.status = 'chinh_thuc'; note.late_flag = true;
