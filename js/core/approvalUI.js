@@ -5,7 +5,16 @@
 
 import { fmtDate, esc } from './utils.js';
 
-// note: { id, code, ngay_ky, status, late_flag, items: [{id, label, unit, sl_xuat, sl_thuc_nhan, tinh_trang}],
+// Tình trạng chỉ còn "Mới" / "Cũ". Dữ liệu cũ ghi câu dài ("Đúng chất lượng, mới 100%", "Thiếu so với phiếu xuất"...)
+// nên quy về 2 giá trị này khi hiển thị; câu nói về thiếu/dư đã có sẵn ở ô SL thực nhận.
+export function shortCondition(text) {
+  const t = (text ?? '').toLowerCase();
+  if (t.includes('cũ')) return 'Cũ';
+  if (t.includes('mới')) return 'Mới';
+  return '—';
+}
+
+// note: { id, code, ngay_ky, status, late_flag, items: [{id, label, unit, sl_xuat, sl_thuc_nhan, qty_thanh_ly, qty_tra_lai, tinh_trang}],
 //         meta, signInfo, categoryOptions: [{id, name, unit}] (chỉ cần khi status='tam') }
 export function renderApprovalCard(note) {
   const badge = note.status === 'tam'
@@ -21,7 +30,15 @@ export function renderApprovalCard(note) {
     return `<tr>
       <td>${esc(it.label)}</td><td>${esc(it.unit)}</td>
       <td class="num">${it.sl_xuat}</td><td class="num">${thucNhanCell}</td>
-      <td>${esc(it.tinh_trang || (note.status === 'tam' ? 'Chờ xác nhận' : ''))}</td>
+      <td class="num">${note.status === 'tam'
+        ? `<input type="number" min="0" data-thanhly="${note.id}:${it.id}" value="0">`
+        : (Number(it.qty_thanh_ly) > 0 ? it.qty_thanh_ly : '—')}</td>
+      <td class="num">${note.status === 'tam'
+        ? `<input type="number" min="0" data-tralai="${note.id}:${it.id}" value="0">`
+        : (Number(it.qty_tra_lai) > 0 ? it.qty_tra_lai : '—')}</td>
+      <td class="cond">${note.status === 'tam'
+        ? `<select data-cond="${note.id}:${it.id}"><option value="Mới">Mới</option><option value="Cũ">Cũ</option></select>`
+        : esc(shortCondition(it.tinh_trang))}</td>
     </tr>`;
   }).join('');
 
@@ -46,10 +63,10 @@ export function renderApprovalCard(note) {
       <div><div class="code">${esc(note.code)}</div><div class="meta">${esc(note.meta)} · Ngày ${fmtDate(note.ngay_ky)}</div></div>
       ${badge}
     </div>
-    <table>
-      <thead><tr><th>Tên hàng</th><th>ĐVT</th><th class="num">SL xuất</th><th class="num">SL thực nhận</th><th>Tình trạng</th></tr></thead>
+    <div style="overflow-x:auto;"><table class="approval-table">
+      <thead><tr><th>Tên hàng</th><th>ĐVT</th><th class="num">SL xuất</th><th class="num">SL thực nhận</th><th class="num">Hàng gửi thanh lý</th><th class="num">Hàng gửi trả lại</th><th class="cond">Tình trạng</th></tr></thead>
       <tbody>${itemRows}</tbody>
-    </table>
+    </table></div>
     ${extraRowSection}
     ${confirmBlock}
     <div class="approval-sign">${note.signInfo || ''}</div>
@@ -107,8 +124,17 @@ export function bindApprovalConfirm(container, notes, extraState, onConfirm) {
       const updates = note.items.map(it => {
         const input = container.querySelector(`[data-qty="${noteId}:${it.id}"]`);
         const val = parseFloat(input.value) || it.sl_xuat;
-        return { itemId: it.id, category_id: it.category_id, sl_xuat: it.sl_xuat, sl_thuc_nhan: val, thieu: val < it.sl_xuat };
+        const thanh_ly = parseFloat(container.querySelector(`[data-thanhly="${noteId}:${it.id}"]`)?.value) || 0;
+        const tra_lai = parseFloat(container.querySelector(`[data-tralai="${noteId}:${it.id}"]`)?.value) || 0;
+        const tinh_trang = container.querySelector(`[data-cond="${noteId}:${it.id}"]`)?.value || 'Mới';
+        return { itemId: it.id, label: it.label, category_id: it.category_id, sl_xuat: it.sl_xuat, sl_thuc_nhan: val,
+                 thanh_ly, tra_lai, tinh_trang, thieu: val < it.sl_xuat };
       });
+      const bad = updates.find(u => u.thanh_ly < 0 || u.tra_lai < 0 || u.thanh_ly + u.tra_lai > u.sl_thuc_nhan);
+      if (bad) {
+        alert(`Dòng "${bad.label ?? 'hàng'}": hàng gửi thanh lý + gửi trả lại không được lớn hơn số thực nhận (${bad.sl_thuc_nhan}).`);
+        return;
+      }
       const extraItems = extraState[noteId] || [];
 
       btn.disabled = true;
