@@ -1,5 +1,9 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Cập nhật hiện ngay sau khi Merge
+- Service worker (v3): luôn hỏi lại máy chủ khi tải file, nên bản mới hiện ngay thay vì phải chờ ~10 phút do trình duyệt giữ file cũ.
+- Không thay đổi CSDL.
+
 ## [Chưa phát hành] — Lọc dự án bằng cách gõ
 - Các ô chọn dự án (**Giao nhận** lọc + chọn nơi xuất/nhập, **Hao hụt**, **Đơn hàng**, **Bảng kê → dòng điều chỉnh**) đổi từ danh sách kéo thành **ô gõ để lọc**: gõ số hoặc một phần tên (không cần dấu), bấm hoặc Enter để chọn; phím mũi tên lên/xuống chọn.
 - **Người dùng**: danh sách tick khách hàng và dự án có ô gõ lọc.
