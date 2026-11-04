@@ -5,6 +5,7 @@
 // app chỉ cảnh báo khi lượng đã giao chạm 90% / 95% / vượt 100% tổng các đơn đã đặt.
 import { supabase } from '../core/config.js';
 import { fmtVND, fmtDate, esc, todayStr } from '../core/utils.js';
+import { enhanceSelect } from '../core/searchSelect.js';
 import { openModal, closeModal } from '../core/modal.js';
 
 const STATUS = {
@@ -34,6 +35,7 @@ export async function render(container, profile, isStale = () => false) {
 
   const sel = container.querySelector('#fProject');
   sel.innerHTML = projects.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('');
+  enhanceSelect(sel, { placeholder: 'Gõ số hoặc tên dự án…' });
   if (!projects.length) { container.querySelector('#body').innerHTML = '<div class="empty-state">Chưa có dự án nào</div>'; return; }
 
   let state = null; // dữ liệu dự án đang xem

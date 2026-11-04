@@ -191,3 +191,14 @@ td input[type=number]{ width:90px; padding:4px 6px; }
 }
 
 @media (min-width:701px){ #sidebarBackdrop{ display:none !important; } }
+
+/* Ô gõ để lọc (thay <select> dài) */
+.ss-wrap{ position:relative; width:100%; }
+.ss-input{ width:100%; border-radius:5px; }
+.ss-list{ position:fixed; z-index:9999; background:var(--panel, #fff); border:1px solid var(--line); border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.14); overflow-y:auto; font-size:.86rem; }
+.ss-item{ padding:8px 12px; cursor:pointer; }
+.ss-item:hover, .ss-item.active{ background:var(--red-tint); }
+.ss-item.current{ font-weight:600; }
+.ss-group{ padding:6px 12px; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); background:var(--gray-tint); position:sticky; top:0; }
+.ss-empty{ padding:12px; color:var(--ink-soft); }
+.toolbar .ss-wrap{ max-width:420px; }

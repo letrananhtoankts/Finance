@@ -2,6 +2,7 @@
 import { supabase } from '../core/config.js';
 import { todayStr, daysBetween, fmtDate, esc } from '../core/utils.js';
 import { renderApprovalCard, bindApprovalConfirm, bindExtraItemEvents } from '../core/approvalUI.js';
+import { enhanceSelect } from '../core/searchSelect.js';
 import { renderAttachmentRow, bindAttachmentEvents, uploadAttachment } from '../core/attachments.js';
 import { openModal, closeModal } from '../core/modal.js';
 
@@ -29,6 +30,7 @@ export async function render(container, profile, isStale = () => false) {
 
   container.querySelector('#gnFilterProject').innerHTML = '<option value="">Tất cả dự án</option>' +
     projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  enhanceSelect(container.querySelector('#gnFilterProject'), { placeholder: 'Gõ số hoặc tên dự án để lọc…' });
 
   const catName = (id) => categories.find(c => c.id === id)?.name ?? '(?)';
   const catUnit = (id) => categories.find(c => c.id === id)?.unit ?? '';
@@ -112,6 +114,8 @@ export async function render(container, profile, isStale = () => false) {
     `;
 
     const dialog = openModal({ title: 'Tạo phiếu giao nhận mới', bodyHtml, footerHtml, wide: true });
+    enhanceSelect(dialog.querySelector('#mFrom'), { placeholder: 'Gõ tên kho hoặc dự án…' });
+    enhanceSelect(dialog.querySelector('#mTo'), { placeholder: 'Gõ tên kho hoặc dự án…' });
 
     function addRow() {
       const tbody = dialog.querySelector('#mItemRows');
