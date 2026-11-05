@@ -1,6 +1,6 @@
 // js/modules/doitac.js
 import { supabase } from '../core/config.js';
-import { fmtDate, fmtVND, todayStr, esc } from '../core/utils.js';
+import { fmtDate, fmtVND, todayStr, esc, normPartnerName, normProjectName, autoNormalize } from '../core/utils.js';
 import { openModal, closeModal } from '../core/modal.js';
 
 export async function render(container, profile, isStale = () => false) {
@@ -245,15 +245,16 @@ export async function render(container, profile, isStale = () => false) {
 
   function openNewProjectModal(partner) {
     const bodyHtml = `
-      <div class="field"><label>Tên dự án</label><input type="text" id="jName" placeholder="VD: Vega Nha Trang"></div>
+      <div class="field"><label>Tên dự án</label><input type="text" id="jName" placeholder="VD: Dự Án Diamond Sky"></div>
       <div class="field"><label>Mã dự án</label><input type="text" id="jCode" placeholder="VD: VEGA"></div>
     `;
     const footerHtml = `<button class="btn secondary" id="jCancel">Hủy</button><button class="btn" id="jSubmit">Tạo dự án</button>`;
     const dialog = openModal({ title: `Tạo dự án mới — ${partner.name}`, bodyHtml, footerHtml });
 
     dialog.querySelector('#jCancel').addEventListener('click', closeModal);
+    autoNormalize(dialog.querySelector('#jName'), normProjectName);
     dialog.querySelector('#jSubmit').addEventListener('click', async () => {
-      const name = dialog.querySelector('#jName').value.trim();
+      const name = normProjectName(dialog.querySelector('#jName').value);
       const code = dialog.querySelector('#jCode').value.trim();
       if (!name || !code) { alert('Nhập đủ tên dự án và mã dự án.'); return; }
 
@@ -355,8 +356,9 @@ export async function render(container, profile, isStale = () => false) {
     const dialog = openModal({ title: 'Tạo đối tác mới', bodyHtml, footerHtml });
 
     dialog.querySelector('#pCancel').addEventListener('click', closeModal);
+    autoNormalize(dialog.querySelector('#pName'), normPartnerName);
     dialog.querySelector('#pSubmit').addEventListener('click', async () => {
-      const name = dialog.querySelector('#pName').value.trim();
+      const name = normPartnerName(dialog.querySelector('#pName').value);
       if (!name) { alert('Nhập tên công ty.'); return; }
       const { error } = await supabase.from('partners').insert({
         name,
