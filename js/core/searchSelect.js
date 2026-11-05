@@ -5,6 +5,17 @@
 
 const norm = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
 
+// Từ khóa thông minh: "1m" / "1.5m" / "0,6m" = chiều dài L=1000 / 1500 / 600 (mm) trong tên chủng loại;
+// các từ khóa khác khớp một phần như thường (không cần dấu).
+function tokenMatches(t, textNorm) {
+  const m = /^(\d+(?:[.,]\d+)?)m$/.exec(t);
+  if (m) {
+    const mm = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
+    if (new RegExp('l\\s*=\\s*' + mm + '(?!\\d)').test(textNorm)) return true;
+  }
+  return textNorm.includes(t);
+}
+
 export function enhanceSelect(select, { placeholder = 'Gõ số hoặc tên để tìm…' } = {}) {
   if (!select || select._ssEnhanced) return;
   select._ssEnhanced = true;
@@ -40,7 +51,7 @@ export function enhanceSelect(select, { placeholder = 'Gõ số hoặc tên đ�
 
   function paint(query) {
     const tokens = norm(query).split(/\s+/).filter(Boolean);
-    shown = items.filter(it => tokens.every(t => norm(it.text).includes(t)));
+    shown = items.filter(it => { const tn = norm(it.text); return tokens.every(t => tokenMatches(t, tn)); });
     let lastGroup = null, html = '';
     shown.forEach((it, i) => {
       if (it.group && it.group !== lastGroup) html += `<div class="ss-group">${it.group}</div>`;

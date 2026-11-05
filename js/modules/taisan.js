@@ -7,6 +7,7 @@
 import { supabase } from '../core/config.js';
 import { fmtNum, fmtVND, todayStr, esc } from '../core/utils.js';
 import { openModal, closeModal } from '../core/modal.js';
+import { enhanceSelect } from '../core/searchSelect.js';
 
 export async function render(container, profile, isStale = () => false) {
   container.innerHTML = `
@@ -268,6 +269,7 @@ export async function render(container, profile, isStale = () => false) {
       dialog.querySelector('#aWarehouse').innerHTML = (wh ?? []).map(w => `<option value="${w.id}">${esc(w.name)}</option>`).join('');
     });
 
+    enhanceSelect(dialog.querySelector('#aCategory'), { placeholder: 'Gõ để lọc: vd "ringlock 1m", "nêm 1m"…' });
     dialog.querySelector('#aCategory').addEventListener('change', (e) => {
       dialog.querySelector('#aValue').value = e.target.selectedOptions[0].dataset.refvalue;
     });

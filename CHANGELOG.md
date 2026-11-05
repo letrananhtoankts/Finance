@@ -1,5 +1,10 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Lọc nhanh chủng loại khi tạo phiếu / thêm tài sản
+- Ô chọn **Chủng loại** ở màn **Tạo phiếu giao nhận** và **Thêm tài sản** chuyển thành ô gõ để lọc, không cần kéo danh sách.
+- Gõ **"1m"** ra mọi loại dài 1m (L=1000), **"1.5m"** hoặc **"1,5m"** ra L=1500…; gõ kết hợp được, VD **"ringlock 1m"**, **"nêm 2m"**, **"giằng 600"**. Không cần gõ dấu tiếng Việt.
+- Không thay đổi CSDL.
+
 ## [Chưa phát hành] — Bố cục file Excel bảng kê
 - Dòng "Hợp đồng nguyên tắc… số…, ký ngày…" chuyển xuống ngay dưới tên công trình; dòng "Từ ngày – Đến ngày" nằm dưới nữa, căn giữa.
 - Khối **TỔNG PHÁT SINH TRONG KỲ / THUẾ VAT / TỔNG THANH TOÁN**: nhãn gộp ô và căn phải, số căn phải — không còn bị cắt chữ.
