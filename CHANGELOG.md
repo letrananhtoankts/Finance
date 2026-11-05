@@ -1,5 +1,9 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Chuẩn hóa cách ghi tên
+- Tên khách hàng/đối tác tự **IN HOA** (VD: CÔNG TY CỔ PHẦN ABC); tên dự án tự **viết hoa chữ cái đầu mỗi từ** (VD: Dự Án Diamond Sky). Tự định dạng khi rời ô nhập và khi lưu.
+- Tùy chọn: file `sql/2026-11-05_chuan-hoa-ten.sql` sửa các tên đã có (có câu xem trước).
+
 ## [Chưa phát hành] — Sale tạo dự án; đổi tên kho
 - **Sale được tạo dự án** (trước đây báo "violates row-level security policy"). Dự án Sale tạo ra tự được gán cho chính Sale đó nên vẫn thấy. **Cần chạy file SQL `sql/2026-11-05_sale-tao-du-an.sql`.**
 - Kho "Kho lớn" đổi tên thành **Kho Trường Thịnh-BD** (cùng file SQL).
