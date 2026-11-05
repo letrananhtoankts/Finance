@@ -1,5 +1,9 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Sale tạo dự án; đổi tên kho
+- **Sale được tạo dự án** (trước đây báo "violates row-level security policy"). Dự án Sale tạo ra tự được gán cho chính Sale đó nên vẫn thấy. **Cần chạy file SQL `sql/2026-11-05_sale-tao-du-an.sql`.**
+- Kho "Kho lớn" đổi tên thành **Kho Trường Thịnh-BD** (cùng file SQL).
+
 ## [Chưa phát hành] — Đơn hàng làm lại theo dự án
 - **Đơn hàng** mở ra **danh sách dự án** (Sale chỉ thấy dự án mình phụ trách) kèm Tổng cần / Đã đặt / **Đã cấp về** (tấn), % cấp/đặt và cảnh báo màu: xanh (an toàn), vàng (≥90%), cam (≥95%), đỏ (vượt đơn hoặc chưa có đơn mà đã có hàng về). Dự án nguy hiểm xếp lên đầu; có ô gõ tìm.
 - Bấm một dự án: **bảng theo dõi đơn hàng** đúng mẫu — Chủng loại | Tổng cần | ĐH01, ĐH02… | Tổng đặt | **Đã cấp về** | Còn lại | Cấp/Đặt, tô màu từng dòng; các đơn sổ dọc bên dưới (bấm để mở, sửa/xóa).
