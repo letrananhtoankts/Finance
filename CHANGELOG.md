@@ -1,5 +1,11 @@
 # Nhật ký cập nhật
 
+## [Chưa phát hành] — Bố cục file Excel bảng kê
+- Dòng "Hợp đồng nguyên tắc… số…, ký ngày…" chuyển xuống ngay dưới tên công trình; dòng "Từ ngày – Đến ngày" nằm dưới nữa, căn giữa.
+- Khối **TỔNG PHÁT SINH TRONG KỲ / THUẾ VAT / TỔNG THANH TOÁN**: nhãn gộp ô và căn phải, số căn phải — không còn bị cắt chữ.
+- "BÊN CHO THUÊ / BÊN THUÊ" và "(Ký, ghi rõ họ tên)" căn giữa, chừa sẵn khoảng trống bên dưới để ký tay khi in.
+- Không thay đổi CSDL.
+
 ## [Chưa phát hành] — Chuẩn hóa cách ghi tên
 - Tên khách hàng/đối tác tự **IN HOA** (VD: CÔNG TY CỔ PHẦN ABC); tên dự án tự **viết hoa chữ cái đầu mỗi từ** (VD: Dự Án Diamond Sky). Tự định dạng khi rời ô nhập và khi lưu.
 - Tùy chọn: file `sql/2026-11-05_chuan-hoa-ten.sql` sửa các tên đã có (có câu xem trước).
