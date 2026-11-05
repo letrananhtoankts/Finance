@@ -130,6 +130,7 @@ export async function render(container, profile, isStale = () => false) {
       row.querySelector('.row-cat').addEventListener('change', (e) => {
         row.querySelector('.row-unit').textContent = e.target.selectedOptions[0].dataset.unit;
       });
+      enhanceSelect(row.querySelector('.row-cat'), { placeholder: 'Gõ để lọc: vd "ringlock 1m", "nêm 1m"…' });
       row.querySelector('.row-remove').addEventListener('click', () => { row.remove(); renumberRows(); });
       renumberRows();
     }
