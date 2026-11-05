@@ -216,6 +216,8 @@ export async function render(container, profile, isStale = () => false) {
     const grayFill = { fill: { fgColor: { rgb: 'F2F2F2' } }, font: { bold: true } };
     const centerBold14 = { font: { bold: true, sz: 14 }, alignment: { horizontal: 'center' } };
     const italic = { font: { italic: true } };
+    const rightBold = { font: { bold: true }, alignment: { horizontal: 'right' } };
+    const rightBoldRed = { font: { bold: true, color: { rgb: 'C00000' } }, alignment: { horizontal: 'right' } };
 
     pushRow(['BÊN CHO THUÊ:', '', '', '', '', 'BÊN THUÊ:', '', '', '', '']);
     styleCell(1, 0, bold); styleCell(1, 5, bold);
@@ -224,13 +226,15 @@ export async function render(container, profile, isStale = () => false) {
     pushRow([`Địa chỉ: ${companyInfo.address ?? '19 Đường số 3, Khu nhà ở Hưng Phú, KP1, P.Tam Phú, TP Thủ Đức, TP.HCM'}`, '', '', '', '', `Địa chỉ: ${partner.address ?? ''}`, '', '', '', '']);
     pushRow([`MST: ${companyInfo.mst ?? '0317171798'}   ĐT: ${companyInfo.phone ?? '0937 261 862'}`, '', '', '', '', `MST: ${partner.mst ?? ''}`, '', '', '', '']);
     pushRow(['', '', '', '', '', '', '', '', '', '']);
-    pushRow([`Hợp đồng nguyên tắc thuê thiết bị xây dựng số: ${partner.hop_dong_so ?? ''}, ký ngày ${partner.hop_dong_ngay ? fmtDate(partner.hop_dong_ngay) : ''}`, '', '', '', '', 'Từ ngày:', fmtDate(from), 'Đến ngày:', fmtDate(to), '']);
-    styleCell(6, 5, italic); styleCell(6, 7, italic);
-    pushRow(['', '', '', '', '', '', '', '', '', '']);
     pushRow(['BẢNG TÍNH TIỀN THUÊ THIẾT BỊ', '', '', '', '', '', '', '', '', '']);
-    styleCell(8, 0, centerBold14);
+    styleCell(6, 0, centerBold14);
     pushRow([`Công trình: ${project.name}`, '', '', '', '', '', '', '', '', '']);
-    styleCell(9, 0, { font: { bold: true }, alignment: { horizontal: 'center' } });
+    styleCell(7, 0, { font: { bold: true }, alignment: { horizontal: 'center' } });
+    // Dòng hợp đồng nằm ngay dưới tên công trình
+    pushRow([`Hợp đồng nguyên tắc thuê thiết bị xây dựng số: ${partner.hop_dong_so ?? ''}, ký ngày ${partner.hop_dong_ngay ? fmtDate(partner.hop_dong_ngay) : ''}`, '', '', '', '', '', '', '', '', '']);
+    styleCell(8, 0, { alignment: { horizontal: 'center' } });
+    pushRow([`Từ ngày: ${fmtDate(from)}      Đến ngày: ${fmtDate(to)}`, '', '', '', '', '', '', '', '', '']);
+    styleCell(9, 0, { font: { italic: true }, alignment: { horizontal: 'center' } });
     pushRow(['', '', '', '', '', '', '', '', '', '']);
 
     const headerRowIdx = r;
@@ -284,14 +288,14 @@ export async function render(container, profile, isStale = () => false) {
       pushRow(['', '', `Điều chỉnh${adjustmentNote ? ' — ' + adjustmentNote : ''}`, '', '', '', '', adjustmentAmount, '', '']);
     }
     const totalRowIdx = r;
-    pushRow(['', '', '', '', '', '', 'TỔNG PHÁT SINH TRONG KỲ', tongPhatSinh, '', '']);
-    styleCell(totalRowIdx, 6, bold); styleCell(totalRowIdx, 7, bold);
+    pushRow(['', '', '', '', 'TỔNG PHÁT SINH TRONG KỲ', '', '', tongPhatSinh, '', '']);
+    styleCell(totalRowIdx, 4, rightBold); styleCell(totalRowIdx, 7, rightBold);
     const vatRowIdx = r;
-    pushRow(['', '', '', '', '', '', `THUẾ VAT (${vatRate}%)`, vatAmount, '', '']);
-    styleCell(vatRowIdx, 6, bold); styleCell(vatRowIdx, 7, bold);
+    pushRow(['', '', '', '', `THUẾ VAT (${vatRate}%)`, '', '', vatAmount, '', '']);
+    styleCell(vatRowIdx, 4, rightBold); styleCell(vatRowIdx, 7, rightBold);
     const grandRowIdx = r;
-    pushRow(['', '', '', '', '', '', 'TỔNG THANH TOÁN', total, '', '']);
-    for (let col = 6; col <= 7; col++) styleCell(grandRowIdx, col, boldRed);
+    pushRow(['', '', '', '', 'TỔNG THANH TOÁN', '', '', total, '', '']);
+    styleCell(grandRowIdx, 4, rightBoldRed); styleCell(grandRowIdx, 7, rightBoldRed);
 
     pushRow(['', '', '', '', '', '', '', '', '', '']);
     pushRow(['', '', '', '', '', '', '', '', '', '']);
@@ -300,16 +304,23 @@ export async function render(container, profile, isStale = () => false) {
     styleCell(signRowIdx, 0, { font: { bold: true }, alignment: { horizontal: 'center' } });
     styleCell(signRowIdx, 5, { font: { bold: true }, alignment: { horizontal: 'center' } });
     pushRow(['(Ký, ghi rõ họ tên)', '', '', '', '', '(Ký, ghi rõ họ tên)', '', '', '', '']);
+    styleCell(signRowIdx + 1, 0, { font: { italic: true }, alignment: { horizontal: 'center' } });
+    styleCell(signRowIdx + 1, 5, { font: { italic: true }, alignment: { horizontal: 'center' } });
+    for (let i = 0; i < 6; i++) pushRow(['', '', '', '', '', '', '', '', '', '']); // chừa chỗ ký tay khi in
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!rows'] = []; ws['!rows'][signRowIdx + 1] = { hpt: 20 }; for (let i = 0; i < 6; i++) ws['!rows'][signRowIdx + 2 + i] = { hpt: 24 };
     ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 26 }, { wch: 7 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 14 }, { wch: 10 }];
     ws['!merges'] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, { s: { r: 0, c: 5 }, e: { r: 0, c: 9 } },
       { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, { s: { r: 1, c: 5 }, e: { r: 1, c: 9 } },
       { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } }, { s: { r: 2, c: 5 }, e: { r: 2, c: 9 } },
       { s: { r: 3, c: 0 }, e: { r: 3, c: 3 } }, { s: { r: 3, c: 5 }, e: { r: 3, c: 9 } },
-      { s: { r: 5, c: 0 }, e: { r: 5, c: 4 } },
+      { s: { r: 5, c: 0 }, e: { r: 5, c: 9 } }, { s: { r: 6, c: 0 }, e: { r: 6, c: 9 } },
       { s: { r: 7, c: 0 }, e: { r: 7, c: 9 } }, { s: { r: 8, c: 0 }, e: { r: 8, c: 9 } },
+      { s: { r: totalRowIdx - 1, c: 4 }, e: { r: totalRowIdx - 1, c: 6 } },
+      { s: { r: vatRowIdx - 1, c: 4 }, e: { r: vatRowIdx - 1, c: 6 } },
+      { s: { r: grandRowIdx - 1, c: 4 }, e: { r: grandRowIdx - 1, c: 6 } },
       { s: { r: signRowIdx - 1, c: 0 }, e: { r: signRowIdx - 1, c: 3 } }, { s: { r: signRowIdx - 1, c: 5 }, e: { r: signRowIdx - 1, c: 9 } },
       { s: { r: signRowIdx, c: 0 }, e: { r: signRowIdx, c: 3 } }, { s: { r: signRowIdx, c: 5 }, e: { r: signRowIdx, c: 9 } },
     ];
